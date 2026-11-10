@@ -61,6 +61,27 @@ python -m pcsx2_mcp
 
 The server communicates over stdio, so it normally runs under an MCP client rather than in a standalone interactive terminal.
 
+### Linux
+
+The server also runs on Linux (and should on macOS). Settings and logs are read
+from `~/.config/PCSX2` (or the Flatpak path), and `launch_pcsx2` finds
+`pcsx2-qt` on `PATH` when `exe_path` is omitted. Everything that goes through
+the GDB servers works the same; the Win32-only tools (`capture_pcsx2_window`,
+`list_pcsx2_windows`, and the keyboard input backend) return an error instead.
+Use the native `qPcsx2` input backend while a GDB client is connected.
+
+```bash
+uv venv .venv && uv pip install -p .venv -e .
+claude mcp add --scope user pcsx2 -- /path/to/PCSX2_MCP/.venv/bin/python -m pcsx2_mcp
+```
+
+Optional environment variables: `PCSX2_MCP_DATA_DIR` (PCSX2 user data
+directory), `PCSX2_MCP_EXE` (emulator binary), `PCSX2_MCP_LOG_DIR` (where
+`launch_pcsx2` writes emulator output).
+
+The GDB servers require a PCSX2 build that includes them, such as
+[snowyegret23/pcsx2](https://github.com/snowyegret23/pcsx2) built from source.
+
 ### Codex MCP configuration
 
 To register PCSX2 MCP as a local stdio server in Codex, add the following blocks to `%USERPROFILE%\.codex\config.toml`. Replace `C:\path\to\PCSX2_MCP` with the path where you cloned this repository.

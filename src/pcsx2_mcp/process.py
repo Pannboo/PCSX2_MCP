@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -94,7 +96,21 @@ def terminate_processes(force: bool = False, timeout: float = 5.0) -> dict:
     return {"killed": killed, "failed": failed}
 
 
-def launch(exe_path: str, game_path: str | None = None, extra_args: list[str] | None = None) -> dict:
+def default_exe() -> str | None:
+    env = os.environ.get("PCSX2_MCP_EXE")
+    if env:
+        return env
+    for name in ("pcsx2-qt", "pcsx2", "pcsx2-qt.exe", "pcsx2.exe"):
+        found = shutil.which(name)
+        if found:
+            return found
+    return None
+
+
+def launch(exe_path: str | None = None, game_path: str | None = None, extra_args: list[str] | None = None) -> dict:
+    exe_path = exe_path or default_exe()
+    if not exe_path:
+        return {"ok": False, "error": "PCSX2 executable not found; pass exe_path or set PCSX2_MCP_EXE"}
     exe = Path(exe_path)
     if not exe.exists():
         return {"ok": False, "error": f"PCSX2 executable not found: {exe}"}
@@ -105,8 +121,8 @@ def launch(exe_path: str, game_path: str | None = None, extra_args: list[str] | 
     if extra_args:
         args.extend(extra_args)
 
-    log_dir = Path(__file__).resolve().parents[2] / "logs"
-    log_dir.mkdir(exist_ok=True)
+    log_dir = Path(os.environ.get("PCSX2_MCP_LOG_DIR") or Path(__file__).resolve().parents[2] / "logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / f"pcsx2-{time.strftime('%Y%m%d-%H%M%S')}.log"
     creationflags = 0
     creationflags |= getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
@@ -123,6 +139,7 @@ def launch(exe_path: str, game_path: str | None = None, extra_args: list[str] | 
             creationflags=creationflags,
             close_fds=True,
             startupinfo=_hidden_startupinfo(),
+            start_new_session=os.name != "nt",
         )
     finally:
         log.close()

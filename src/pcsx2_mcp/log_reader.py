@@ -6,16 +6,9 @@ import os
 import re
 from pathlib import Path
 
-DOCUMENTS = Path.home() / "Documents" / "PCSX2"
-LOCALAPPDATA = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData/Local")))
+from .paths import log_candidates
 
-DEFAULT_CANDIDATES = (
-    DOCUMENTS / "logs" / "emulog.txt",
-    DOCUMENTS / "logs" / "pcsx2.log",
-    DOCUMENTS / "emulog.txt",
-    LOCALAPPDATA / "PCSX2" / "logs" / "emulog.txt",
-    LOCALAPPDATA / "PCSX2" / "pcsx2.log",
-)
+DEFAULT_CANDIDATES = tuple(log_candidates())
 
 LEVEL_RE = re.compile(r"\b(error|warning|warn|info|debug|trace)\b", re.IGNORECASE)
 

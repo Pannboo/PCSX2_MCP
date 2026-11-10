@@ -181,9 +181,9 @@ def choose_backend(backend: str) -> tuple[str, str | None]:
 
 
 def default_config_candidates() -> list[Path]:
-    docs = Path.home() / "Documents" / "PCSX2"
-    local = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData/Local"))) / "PCSX2"
-    return [docs / "PCSX2.ini", docs / "inis" / "PCSX2.ini", local / "PCSX2.ini"]
+    from .paths import config_candidates
+
+    return config_candidates()
 
 
 def _section_bounds(lines: list[str], section: str) -> tuple[int, int] | None:

@@ -15,11 +15,19 @@ from typing import Any
 from mcp.server import MCPServer
 
 from . import background_input
-from . import keyboard_input
 from . import log_reader
 from . import process as pcsx2_process
-from . import window_capture
 from .gdb_client import BP_TYPE_MAP, GDBClient, GDBError, REG_NAMES
+from . import paths
+
+try:
+    from . import window_capture
+except (AttributeError, OSError) as _exc:  # Win32-only (user32/gdi32)
+    window_capture = paths.Unavailable("Window capture", _exc)
+try:
+    from . import keyboard_input
+except (AttributeError, OSError) as _exc:  # Win32-only (PostMessageW)
+    keyboard_input = paths.Unavailable("Background keyboard input", _exc)
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORTS = {"ee": 10501, "iop": 10502}
@@ -427,9 +435,7 @@ def _pcsx2_debug_command(target: str, command: str) -> str:
 
 
 def _config_candidates() -> list[Path]:
-    docs = Path.home() / "Documents" / "PCSX2"
-    local = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData/Local"))) / "PCSX2"
-    return [docs / "PCSX2.ini", docs / "inis" / "PCSX2.ini", local / "PCSX2.ini"]
+    return paths.config_candidates()
 
 
 def _background_input_context(pid: int | None, config_path: str | None) -> tuple[dict[str, Any], Path | None]:
@@ -1373,7 +1379,7 @@ def start_rewind_capture(
         return _err(str(e))
 
     if directory is None:
-        directory = str(Path.home() / "Documents" / "PCSX2" / "rewind_mcp")
+        directory = str(paths.primary_data_dir() / "rewind_mcp")
     worker = RewindWorker(
         rewind_id=rewind_id,
         target=tgt,
@@ -1716,8 +1722,8 @@ def kill_pcsx2(force: bool = False, timeout: float = 5.0) -> dict:
 
 
 @mcp.tool()
-def launch_pcsx2(exe_path: str, game_path: str | None = None, extra_args: list[str] | None = None) -> dict:
-    """Launch PCSX2, optionally with a game path."""
+def launch_pcsx2(exe_path: str | None = None, game_path: str | None = None, extra_args: list[str] | None = None) -> dict:
+    """Launch PCSX2, optionally with a game path. exe_path defaults to $PCSX2_MCP_EXE or pcsx2-qt/pcsx2 on PATH."""
     return pcsx2_process.launch(exe_path, game_path, extra_args)
 
 
